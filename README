@@ -3,9 +3,9 @@
 
 Munin plugin for graphing information out of Memcached
 
-Memcached:  http://www.memcached.org
+Memcached: http://memcached.org
 
-Munin: http://www.munin-monitoring.org
+Munin: http://munin-monitoring.org
 
 
 What does this plugin do?
@@ -13,6 +13,7 @@ What does this plugin do?
 Well depending on the version you are running, this plugin will give you either a bird's eye view of a node's Memcache performance,
 or the bird's eye view as well as the worm's view... it breaks down hit rates / evictions and other metrics to a per slab basis.
 Ultimately this would allow a power user to re-tune their Memcache cluster to better handle slabs of a certain size.
+
 
 PLUGINS
 =======
@@ -81,6 +82,7 @@ munin-node-configure --suggest --shell | grep memcached_
     ln -s '/usr/share/munin/plugins/memcached_' '/etc/munin/plugins/memcached_memory'
 
 6) Restart munin-node
+
 
 INFORMATION
 ===========
