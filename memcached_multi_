@@ -534,6 +534,7 @@ sub print_rootmulti_output {
         my %datasrc = %$dsrc;
         while ( my ($key, $value) = each(%datasrc)) {
             next if ($key ne 'name');
+            next if (($plugin eq 'evictions') && ($value eq 'reclaimed') && ($stats{version} =~ /1\.4\.[0-2]/));
             if (($plugin eq 'evictions') && ($value eq 'evicted_nonzero')) {
                 foreach my $slabid (sort{$a <=> $b} keys %items) {
                     $output += $items{$slabid}->{evicted_nonzero};
@@ -587,6 +588,7 @@ sub print_submulti_output {
             my %datasrc = %$dsrc;
             while ( my ($key, $value) = each(%datasrc)) {
                 next if ($key ne 'name');
+                next if (($sgraph eq 'slabevics') && ($value eq 'reclaimed') && ($stats{version} =~ /1\.4\.[0-2]/));
                 my $output = $currslab->{$value};
                 if (($sgraph eq 'slabevictime') || ($sgraph eq 'slabitemtime')) {
                     $output = time_scale('data',$output); ;
@@ -698,8 +700,7 @@ sub print_submulti_config {
 =head2 print_rootmulti_config
 
     This subroutine prints out the config information for all of the main(root) graphs.
-    It takes one parameters, $plugin, returns when completed, returns when completed,
-    this is the multigraph config output subroutine for the main graph
+    It takes one parameter, $plugin, returns when completed.
 
         $plugin;    main(root) graph used for multigraph call
 
@@ -731,8 +732,7 @@ sub print_rootmulti_config {
 =head2 print_root_config
 
     This subroutine prints out the config information for all of the main(root) graphs.
-    It takes one parameters, $plugin, returns when completed, returns when completed,
-    this is the non multigraph config output subroutine for the graph
+    It takes one parameter, $plugin, returns when completed.
 
         $plugin;    main(root) graph used for multigraph call
 
@@ -786,7 +786,7 @@ sub fetch_stats {
     # Lets print the stats command and store the info from the output
     print $s "stats\r\n";
     while (my $line = <$s>) {
-        if ($line =~ /STAT\s(.+?)\s(\d+)/) {
+        if ($line =~ /STAT\s(.+?)\s(.*)/) {
             my ($skey,$svalue) = ($1,$2);
             $stats{$skey} = $svalue;
         }
@@ -795,7 +795,7 @@ sub fetch_stats {
     # Lets print the stats settings command and store the info from the output
     print $s "stats settings\r\n";
     while (my $line = <$s>) {
-        if ($line =~ /STAT\s(.+?)\s(\d+)/) {
+        if ($line =~ /STAT\s(.+?)\s(.*)/) {
             my ($skey,$svalue) = ($1,$2);
             $stats{$skey} = $svalue;
         }
