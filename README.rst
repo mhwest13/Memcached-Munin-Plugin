@@ -10,7 +10,7 @@ PLUGINS
 
 There are two plugins available in this repository. You should choose one based on your needs:
 
-1. memcached_  - High-level overview for munin v1.2.x+ and non-power users
+1. memcached\_  - High-level overview for munin v1.2.x+ and non-power users
 
 2. memcached_multi_  Includes both high-level and more detailed views. Requires Munin Master/Client v1.4.x+ due to multigraph requirements.
 
@@ -28,10 +28,10 @@ INSTALLATION
     - munin-node v1.4.+
     - memcached
         - v1.4.2+ for memcached_multi_
-        - v1.2.6+ for memcached_
+        - v1.2.6+ for memcached\_
     - Perl Modules: IO::Socket, File::Basename
 
-2. Make sure the plugin is located in `/usr/share/munin/plugins/` as memcached_multi_ or memcached_, depending on which you chose. (For ease of documentation, for the rest of these instructions we'll assume you're installing memcache_.) Ensure that the file is executable, e.g. `chmod +x`.
+2. Make sure the plugin is located in `/usr/share/munin/plugins/` as memcached_multi_ or memcached\_, depending on which you chose. (For ease of documentation, for the rest of these instructions we'll assume you're installing memcache\_.) Ensure that the file is executable, e.g. `chmod +x`.
 
 3. You will need to create six symlinks from `/usr/share/munin/plugins/memcache_` to `/etc/munin/plugins`:
 
@@ -56,17 +56,17 @@ INSTALLATION
 
 5. If you have installed and configured everything properly, test it by running:
 
-    munin-node-configure --suggest | grep memcached_
+    munin-node-configure --suggest | grep memcached\_
 
 If your setup is correct, you should see a line similar to:
 
-    memcached_ | yes | yes (bytes commands conns evictions items memory)
+    memcached\_ | yes | yes (bytes commands conns evictions items memory)
 
 6. To test that your symlinks are configured properly:
 
-    munin-node-configure --suggest --shell | grep memcached_
+    munin-node-configure --suggest --shell | grep memcached\_
 
-If your symlinks are set properly, this should return no output. You may receive some stderr lines, but as long as they do not mention memcache_, your installation is fine. If your symlinks are not properly configured, you'll see lines exactly like those in step 3. You will need to create each of the symlinks that are printed to screen at this time.
+If your symlinks are set properly, this should return no output. You may receive some stderr lines, but as long as they do not mention memcache\_, your installation is fine. If your symlinks are not properly configured, you'll see lines exactly like those in step 3. You will need to create each of the symlinks that are printed to screen at this time.
 
 
 7. Restart munin-node
