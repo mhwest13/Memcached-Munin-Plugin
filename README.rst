@@ -35,12 +35,17 @@ INSTALLATION
 
 3. You will need to create six symlinks from `/usr/share/munin/plugins/memcache_` to `/etc/munin/plugins`:
 
-    ln -s '/usr/share/munin/plugins/memcached_' '/etc/munin/plugins/memcached_bytes'
-    ln -s '/usr/share/munin/plugins/memcached_' '/etc/munin/plugins/memcached_commands'
-    ln -s '/usr/share/munin/plugins/memcached_' '/etc/munin/plugins/memcached_conns'
-    ln -s '/usr/share/munin/plugins/memcached_' '/etc/munin/plugins/memcached_evictions'
-    ln -s '/usr/share/munin/plugins/memcached_' '/etc/munin/plugins/memcached_items'
-    ln -s '/usr/share/munin/plugins/memcached_' '/etc/munin/plugins/memcached_memory'
+    ln -s '/usr/share/munin/plugins/memcached\_' '/etc/munin/plugins/memcached_bytes'
+    
+    ln -s '/usr/share/munin/plugins/memcached\_' '/etc/munin/plugins/memcached_commands'
+    
+    ln -s '/usr/share/munin/plugins/memcached\_' '/etc/munin/plugins/memcached_conns'
+    
+    ln -s '/usr/share/munin/plugins/memcached\_' '/etc/munin/plugins/memcached_evictions'
+    
+    ln -s '/usr/share/munin/plugins/memcached\_' '/etc/munin/plugins/memcached_items'
+    
+    ln -s '/usr/share/munin/plugins/memcached\_' '/etc/munin/plugins/memcached_memory'
 
 4. Configure the plugin. This can either go in a separate config file such as in `/etc/munin/plugin-conf.d/memcached` or in a "master" config such as `/etc/munin/plugin-conf.d/munin-node`. For example (using all memcached defaults):
 
