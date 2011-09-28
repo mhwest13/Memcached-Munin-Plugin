@@ -12,7 +12,7 @@ There are two plugins available in this repository. You should choose one based 
 
 1. memcached\_  - High-level overview for munin v1.2.x+ and non-power users
 
-2. memcached_multi_  Includes both high-level and more detailed views. Requires Munin Master/Client v1.4.x+ due to multigraph requirements.
+2. memcached_multi\_  Includes both high-level and more detailed views. Requires Munin Master/Client v1.4.x+ due to multigraph requirements.
 
 It breaks down hit rates / evictions and other metrics to a per slab basis.
 
@@ -31,9 +31,9 @@ INSTALLATION
         - v1.2.6+ for memcached\_
     - Perl Modules: IO::Socket, File::Basename
 
-2. Make sure the plugin is located in `/usr/share/munin/plugins/` as memcached_multi_ or memcached\_, depending on which you chose. (For ease of documentation, for the rest of these instructions we'll assume you're installing memcache\_.) Ensure that the file is executable, e.g. `chmod +x`.
+2. Make sure the plugin is located in ``/usr/share/munin/plugins/`` as memcached_multi\_ or memcached\_, depending on which you chose. (For ease of documentation, for the rest of these instructions we'll assume you're installing memcache\_.) Ensure that the file is executable, e.g. ``chmod +x``.
 
-3. You will need to create six symlinks from `/usr/share/munin/plugins/memcache_` to `/etc/munin/plugins`:
+3. You will need to create six symlinks from ``/usr/share/munin/plugins/memcache_`` to ``/etc/munin/plugins``:
 
     ln -s '/usr/share/munin/plugins/memcached\_' '/etc/munin/plugins/memcached_bytes'
     
@@ -47,7 +47,7 @@ INSTALLATION
     
     ln -s '/usr/share/munin/plugins/memcached\_' '/etc/munin/plugins/memcached_memory'
 
-4. Configure the plugin. This can either go in a separate config file such as in `/etc/munin/plugin-conf.d/memcached` or in a "master" config such as `/etc/munin/plugin-conf.d/munin-node`. For example (using all memcached defaults):
+4. Configure the plugin. This can either go in a separate config file such as in ``/etc/munin/plugin-conf.d/memcached`` or in a "master" config such as ``/etc/munin/plugin-conf.d/munin-node``. For example (using all memcached defaults):
 
     [memcached_*]
     env.host 127.0.0.1  
