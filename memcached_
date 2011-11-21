@@ -32,7 +32,7 @@ evictions => This graphs the current evictions on the node.
 
 items => This graphs the current items and total items in the memcached node.
 
-memory => This graphs the current and max memory allocation. 
+memory => This graphs the current and max memory allocation.
 
 The following example holds true for all graphing options in this plugin.
  Example: ln -s /usr/share/munin/plugins/memcached_ /etc/munin/plugins/memcached_bytes
@@ -199,13 +199,9 @@ if (defined $ARGV[0] && $ARGV[0] eq 'config') {
 ##
 
 if (defined $ARGV[0] && $ARGV[0] eq 'autoconf') {
-
-    my $s = IO::Socket::INET->new(
-        Proto    => "tcp",
-        PeerAddr => $host,
-        PeerPort => $port,
-    );
-
+    # Lets attempt to connect to memcached
+    my $s = get_conn();
+    # Lets check that we did connect to memcached
     if (defined($s)) {
         print "yes\n";
         exit 0;
@@ -220,13 +216,9 @@ if (defined $ARGV[0] && $ARGV[0] eq 'autoconf') {
 ##
 
 if (defined $ARGV[0] && $ARGV[0] eq 'suggest') {
-
-    my $s = IO::Socket::INET->new(
-        Proto    => "tcp",
-        PeerAddr => $host,
-        PeerPort => $port,
-    );
-
+    # Lets attempt to connect to memcached
+    my $s = get_conn();
+    # Lets check that we did connect to memcached
     if (defined($s)) {
         my @rootplugins = ('bytes','conns','commands','evictions','items','memory');
         foreach my $plugin (@rootplugins) {
@@ -262,7 +254,7 @@ sub fetch_output {
 
     # Well we need to actually fetch the stats before we do anything to them.
     fetch_stats();
-    
+
     # Now lets go ahead and print out our output.
     print_root_output($plugin);
 
@@ -325,6 +317,32 @@ sub do_config {
 }
 
 ##
+#### This subroutine returns a socket connection ####
+##
+
+sub get_conn {
+    my $s = undef;
+
+    # check if we want to use sockets instead of tcp
+    my ($sock) = ($host =~ /unix:\/\/(.+)*$/);
+
+    if ($sock) {
+       $s = IO::Socket::UNIX->new(
+            Peer     => $sock
+      );
+    } else {
+       $s = IO::Socket::INET->new(
+            Proto    => "tcp",
+            PeerAddr => $host,
+            PeerPort => $port,
+            Timeout  => 10,
+       );
+    }
+
+    return $s;
+}
+
+##
 #### This subroutine is for the config info for non multigraph graphs which render on the main node page ####
 ##
 
@@ -360,11 +378,7 @@ sub print_root_config {
 ##
 
 sub fetch_stats {
-    my $s = IO::Socket::INET->new(
-        Proto    => "tcp",
-        PeerAddr => $host,
-        PeerPort => $port,
-    );
+    my $s = get_conn();
 
     die "Error: Unable to Connect to $host\[:$port\]\n" unless $s;
 

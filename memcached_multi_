@@ -359,12 +359,7 @@ if (defined $ARGV[0] && $ARGV[0] eq 'config') {
 
 if (defined $ARGV[0] && $ARGV[0] eq 'autoconf') {
     # Lets attempt to connect to memcached
-    my $s = IO::Socket::INET->new(
-        Proto    => "tcp",
-        PeerAddr => $host,
-        PeerPort => $port,
-        Timeout  => 10,
-    );
+    my $s = get_conn();
     # Lets verify that we did connect to memcached
     if (defined($s)) {
         print "yes\n";
@@ -388,13 +383,8 @@ if (defined $ARGV[0] && $ARGV[0] eq 'autoconf') {
 
 if (defined $ARGV[0] && $ARGV[0] eq 'suggest') {
     # Lets attempt to connect to memcached
-    my $s = IO::Socket::INET->new(
-        Proto    => "tcp",
-        PeerAddr => $host,
-        PeerPort => $port,
-        Timeout  => 10,
-    );
-    # Lets check that we did connect to memcached    
+    my $s = get_conn();
+    # Lets check that we did connect to memcached
     if (defined($s)) {
         my @rootplugins = ('bytes','conns','commands','evictions','items','memory');
         foreach my $plugin (@rootplugins) {
@@ -649,6 +639,34 @@ sub do_config {
     return;
 }
 
+=head2 get_conn
+
+    This subroutine returns a socket connection
+
+=cut
+
+sub get_conn {
+    my $s = undef;
+
+    # check if we want to use sockets instead of tcp
+    my ($sock) = ($host =~ /unix:\/\/(.+)*$/);
+
+    if ($sock) {
+       $s = IO::Socket::UNIX->new(
+            Peer     => $sock
+      );
+    } else {
+       $s = IO::Socket::INET->new(
+            Proto    => "tcp",
+            PeerAddr => $host,
+            PeerPort => $port,
+            Timeout  => 10,
+       );
+    }
+
+    return $s;
+}
+
 =head2 print_submulti_config
 
     This subroutine prints out the config information for all of the subgraphs.
@@ -775,12 +793,7 @@ sub print_root_config {
 
 sub fetch_stats {
     # Lets try and connect to memcached
-    my $s = IO::Socket::INET->new(
-        Proto    => "tcp",
-        PeerAddr => $host,
-        PeerPort => $port,
-        Timeout  => 10,
-    );
+    my $s = get_conn();
     # Die if we can't establish a connection to memcached
     die "Error: Unable to Connect to $host\[:$port\]\n" unless $s;
     # Lets print the stats command and store the info from the output
