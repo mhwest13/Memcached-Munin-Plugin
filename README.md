@@ -28,20 +28,16 @@ INSTALLATION
 ------------
 
 1) Dependencies  
-<pre>
-    - munin-master v1.4.+  
-    - munin-node v1.4.+  
-    - memcached  
-        - v1.4.2+ for memcached_multi_  
-        - v1.2.6+ for memcached_  
-    - Perl Modules: IO::Socket, File::Basename  
-</pre>
+  * munin-master v1.4.+  
+  * munin-node v1.4.+  
+  * memcached  
+    + v1.4.2+ for memcached_multi_  
+    + v1.2.6+ for memcached_  
+  * Perl Modules: IO::Socket, File::Basename  
 
 2) Make sure the plugin lives in /usr/share/munin/plugins/ as memcached_multi_ or memcached_  
-<pre>
-    * This of course depends on which plugin you have downloaded.  
-    * The plugin must be called up using symlinks so it knows which graph your are trying to fetch information for.  
-</pre>
+  * This of course depends on which plugin you have downloaded.  
+  * The plugin must be called up using symlinks so it knows which graph your are trying to fetch information for.  
 
 3) Inform Munin of plugin dependencies, change options as necessary in the file located at: /etc/munin/plugin-conf.d/memcached
 
