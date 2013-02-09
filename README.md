@@ -1,5 +1,5 @@
-                MUNIN Plugin for MEMCACHED
-               ============================
+MUNIN Plugin for MEMCACHED
+============================
 
 Munin plugin for graphing information out of Memcached
 
@@ -16,7 +16,7 @@ Ultimately this would allow a power user to re-tune their Memcache cluster to be
 
 
 PLUGINS
-=======
+-------
 Available Plugins:
 
 memcached_  <--- basic bird's eye overview, for munin v1.2.x and non-power users
@@ -25,7 +25,7 @@ memcached_multi_  <--- bird's eye overview, and the worm. Requires Munin Master/
 
 
 INSTALLATION
-============
+------------
 
 1) Dependencies
     - munin-master v1.4.+
@@ -85,7 +85,7 @@ munin-node-configure --suggest --shell | grep memcached_
 
 
 INFORMATION
-===========
+-----------
 If you'd like to learn further about the plugin, there is more documentation stored in the
 file as POD, you can view this info with perldoc.
 
