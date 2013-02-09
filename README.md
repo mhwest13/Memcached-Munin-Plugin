@@ -27,21 +27,20 @@ memcached_multi_  <--- bird's eye overview, and the worm. Requires Munin Master/
 INSTALLATION
 ------------
 
-1) Dependencies
-    - munin-master v1.4.+
-    - munin-node v1.4.+
-    - memcached
-        - v1.4.2+ for memcached_multi_
-        - v1.2.6+ for memcached_
-    - Perl Modules: IO::Socket, File::Basename
+1) Dependencies  
+    - munin-master v1.4.+  
+    - munin-node v1.4.+  
+    - memcached  
+        - v1.4.2+ for memcached_multi_  
+        - v1.2.6+ for memcached_  
+    - Perl Modules: IO::Socket, File::Basename  
 
 2) Make sure the plugin lives in /usr/share/munin/plugins/ as memcached_multi_ or memcached_
     * This of course depends on which plugin you have downloaded.
     * The plugin must be called up using symlinks so it knows which graph your are trying to fetch information for.*
 
-3) Inform Munin of plugin dependencies, add necessary options
+3) Inform Munin of plugin dependencies, change options as necessary in the file located at: /etc/munin/plugin-conf.d/memcached
 
-    In /etc/munin/plugin-conf.d/memcached
     [memcached_*]
     env.host 127.0.0.1     *default*
     env.port 11211         *default*
@@ -49,19 +48,32 @@ INSTALLATION
 
 4) Let's see if munin can detect and use the plugin with its internal calls.
 
-munin-node-configure --suggest | grep memcached_multi_
-munin-node-configure --suggest | grep memcached_
+memcached_multi_
+----------------
+
+    munin-node-configure --suggest | grep memcached_multi_
+
+Should return something similar to this if everything checks out...
+
+    memcached_multi_ | no | yes (bytes commands conns evictions items memory)
+
+memcached_
+----------
+
+    munin-node-configure --suggest | grep memcached_
+
+Should return something similar to this if everything checks out...
+
+    memcached_ | no | yes (bytes commands conns evictions items memory)
+
+5) Let's see what munin thinks our symlinks should look like for plugin we are attempting to execute.
+
+memcached_multi_
+----------------
+
+    munin-node-configure --suggest --shell | grep memcached_multi_
 
 Should return this if everything checks out...
-
-memcached_multi_ | no | yes (bytes commands conns evictions items memory)
-memcached_ | no | yes (bytes commands conns evictions items memory)
-
-5) Let's see what munin thinks our symlinks should look like for plugin execution.
-
-munin-node-configure --suggest --shell | grep memcached_multi_
-
-    Should return this if everything checks out...
 
     ln -s '/usr/share/munin/plugins/memcached_multi_' '/etc/munin/plugins/memcached_multi_bytes'
     ln -s '/usr/share/munin/plugins/memcached_multi_' '/etc/munin/plugins/memcached_multi_commands'
@@ -70,9 +82,12 @@ munin-node-configure --suggest --shell | grep memcached_multi_
     ln -s '/usr/share/munin/plugins/memcached_multi_' '/etc/munin/plugins/memcached_multi_items'
     ln -s '/usr/share/munin/plugins/memcached_multi_' '/etc/munin/plugins/memcached_multi_memory'
 
-munin-node-configure --suggest --shell | grep memcached_
+memcached_
+----------
 
-    Should return this if everything checks out...
+    munin-node-configure --suggest --shell | grep memcached_
+
+Should return this if everything checks out...
 
     ln -s '/usr/share/munin/plugins/memcached_' '/etc/munin/plugins/memcached_bytes'
     ln -s '/usr/share/munin/plugins/memcached_' '/etc/munin/plugins/memcached_commands'
@@ -81,7 +96,7 @@ munin-node-configure --suggest --shell | grep memcached_
     ln -s '/usr/share/munin/plugins/memcached_' '/etc/munin/plugins/memcached_items'
     ln -s '/usr/share/munin/plugins/memcached_' '/etc/munin/plugins/memcached_memory'
 
-6) Restart munin-node
+6) Be sure to restart munin-node so it can leverage the new plugins.
 
 
 INFORMATION
