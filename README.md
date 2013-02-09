@@ -19,10 +19,12 @@ PLUGINS
 -------
 Available Plugins:
 
-memcached_  <--- basic bird's eye overview, for munin v1.2.x and non-power users
+### memcached_multi_
+  * bird's eye overview, and the worm.  
+    + Requires Munin Master/Client v1.4.x+ due to multigraph requirements.
 
-memcached_multi_  <--- bird's eye overview, and the worm. Requires Munin Master/Client v1.4.x+ due to multigraph requirements.
-
+### memcached_
+  * basic bird's eye overview, for munin v1.2.x and non-power users
 
 INSTALLATION
 ------------
