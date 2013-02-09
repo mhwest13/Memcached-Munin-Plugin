@@ -38,8 +38,10 @@ INSTALLATION
 </pre>
 
 2) Make sure the plugin lives in /usr/share/munin/plugins/ as memcached_multi_ or memcached_  
+<pre>
     * This of course depends on which plugin you have downloaded.  
-    * The plugin must be called up using symlinks so it knows which graph your are trying to fetch information for.*  
+    * The plugin must be called up using symlinks so it knows which graph your are trying to fetch information for.  
+</pre>
 
 3) Inform Munin of plugin dependencies, change options as necessary in the file located at: /etc/munin/plugin-conf.d/memcached
 
