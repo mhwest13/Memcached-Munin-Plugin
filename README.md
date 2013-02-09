@@ -52,8 +52,7 @@ INSTALLATION
 
 4) Let's see if munin can detect and use the plugin with its internal calls.
 
-memcached_multi_
-----------------
+### memcached_multi_
 
     munin-node-configure --suggest | grep memcached_multi_
 
@@ -61,8 +60,7 @@ Should return something similar to this if everything checks out...
 
     memcached_multi_ | no | yes (bytes commands conns evictions items memory)
 
-memcached_
-----------
+### memcached_
 
     munin-node-configure --suggest | grep memcached_
 
@@ -72,8 +70,7 @@ Should return something similar to this if everything checks out...
 
 5) Let's see what munin thinks our symlinks should look like for plugin we are attempting to execute.
 
-memcached_multi_
-----------------
+### memcached_multi_
 
     munin-node-configure --suggest --shell | grep memcached_multi_
 
@@ -86,8 +83,7 @@ Should return this if everything checks out...
     ln -s '/usr/share/munin/plugins/memcached_multi_' '/etc/munin/plugins/memcached_multi_items'
     ln -s '/usr/share/munin/plugins/memcached_multi_' '/etc/munin/plugins/memcached_multi_memory'
 
-memcached_
-----------
+### memcached_
 
     munin-node-configure --suggest --shell | grep memcached_
 
