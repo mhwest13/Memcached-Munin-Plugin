@@ -1,4 +1,4 @@
-MUNIN Plugin for MEMCACHED
+Memcached Munin Plugin
 ============================
 
 Munin plugin for graphing information out of Memcached
