@@ -34,7 +34,7 @@ INSTALLATION
   * munin-master v1.4.+  
   * munin-node v1.4.+  
   * memcached  
-    + v1.4.2+ for memcached_multi_  
+    + v1.4.0+ for memcached_multi_ (last tested / coded against v1.4.15)  
     + v1.2.6+ for memcached_  
   * Perl Modules: IO::Socket, File::Basename  
 
@@ -42,12 +42,25 @@ INSTALLATION
   * This of course depends on which plugin you have downloaded.  
   * The plugin must be called up using symlinks so it knows which graph your are trying to fetch information for.  
 
-3) Inform Munin of plugin dependencies, change options as necessary in the file located at: /etc/munin/plugin-conf.d/memcached
+3) Inform Munin of plugin dependencies, change options as necessary in the files located in: /etc/munin/plugin-conf.d  
 
-    [memcached_*]
-    env.host 127.0.0.1     *default*
-    env.port 11211         *default*
-    env.timescale 3        *default*
+### memcached_multi_  
+    /etc/munin/plugin-conf.d/memcached_multi  
+
+    [memcached_multi_*]  
+    env.host 127.0.0.1  
+    env.port 11211  
+    env.timescale 3  
+    env.cmds get set delete incr decr touch  
+    env.leitime -1  
+
+### memcached_  
+    /etc/munin/plugin-conf.d/memcached  
+
+    [memcached_*]  
+    env.host 127.0.0.1  
+    env.port 11211  
+    env.timescale 3  
 
 4) Let's see if munin can detect and use the plugin with its internal calls.
 
@@ -57,7 +70,7 @@ INSTALLATION
 
 Should return something similar to this if everything checks out...
 
-    memcached_multi_ | no | yes (bytes commands conns evictions items memory)
+    memcached_multi_ | no | yes (bytes commands conns evictions items memory unfetched)
 
 ### memcached_
 
@@ -73,7 +86,7 @@ Should return something similar to this if everything checks out...
 
     munin-node-configure --suggest --shell | grep memcached_multi_
 
-Should return this if everything checks out...
+Should return this or similar results if everything checks out...
 
     ln -s '/usr/share/munin/plugins/memcached_multi_' '/etc/munin/plugins/memcached_multi_bytes'
     ln -s '/usr/share/munin/plugins/memcached_multi_' '/etc/munin/plugins/memcached_multi_commands'
@@ -81,6 +94,7 @@ Should return this if everything checks out...
     ln -s '/usr/share/munin/plugins/memcached_multi_' '/etc/munin/plugins/memcached_multi_evictions'
     ln -s '/usr/share/munin/plugins/memcached_multi_' '/etc/munin/plugins/memcached_multi_items'
     ln -s '/usr/share/munin/plugins/memcached_multi_' '/etc/munin/plugins/memcached_multi_memory'
+    ln -s '/usr/share/munin/plugins/memcached_multi_' '/etc/munin/plugins/memcached_multi_unfetched'
 
 ### memcached_
 
