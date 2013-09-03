@@ -51,7 +51,7 @@ GPLv2
 
 =head1 MAGIC MARKERS
 
-#%# family=manual
+#%# family=auto
 #%# capabilities=autoconf suggest
 
 =cut
@@ -61,6 +61,7 @@ use IO::Socket;
 
 my $host = $ENV{host} || "127.0.0.1";
 my $port = $ENV{port} || 11211;
+my $connection;
 
 my %stats;
 # This hash contains the information contained in two memcache commands
@@ -181,8 +182,9 @@ $graphs{evictions} = {
 
 if (defined $ARGV[0] && $ARGV[0] eq 'config') {
 
-    $0 =~ /memcached_(.+)*/;
-    my $plugin = $1;
+    $0 =~ /(?:([^\/]+)_)?memcached_(.+)$/;
+    my $prefix = $1 ? $1 : '';
+    my $plugin = $2;
 
     die 'Unknown Plugin Specified: ' . ($plugin ? $plugin : '') unless $graphs{$plugin};
 
@@ -190,7 +192,7 @@ if (defined $ARGV[0] && $ARGV[0] eq 'config') {
     fetch_stats();
 
     # Now lets go ahead and print out our config.
-	do_config($plugin);
+	do_config($prefix,$plugin);
 	exit 0;
 }
 
@@ -206,7 +208,7 @@ if (defined $ARGV[0] && $ARGV[0] eq 'autoconf') {
         print "yes\n";
         exit 0;
     } else {
-        print "no (unable to connect to $host\[:$port\])\n";
+        print "no (unable to connect to $connection)\n";
         exit 0;
     }
 }
@@ -226,7 +228,7 @@ if (defined $ARGV[0] && $ARGV[0] eq 'suggest') {
         }
         exit 0;
     } else {
-        print "no (unable to connect to $host\[:$port\])\n";
+        print "no (unable to connect to $connection)\n";
         exit 0;
     }
 }
@@ -247,8 +249,9 @@ fetch_output();
 
 sub fetch_output {
 
-    $0 =~ /memcached_(.+)*/;
-    my $plugin = $1;
+    $0 =~ /(?:([^\/]+)_)?memcached_(.+)$/;
+    my $prefix = $1 ? $1 : '';
+    my $plugin = $2;
 
     die 'Unknown Plugin Specified: ' . ($plugin ? $plugin : '') unless $graphs{$plugin};
 
@@ -310,36 +313,10 @@ sub print_root_output {
 ##
 
 sub do_config {
-    my ($plugin) = (@_);
-    print_root_config($plugin);
+    my ($prefix,$plugin) = (@_);
+    print_root_config($prefix,$plugin);
 
     return;
-}
-
-##
-#### This subroutine returns a socket connection ####
-##
-
-sub get_conn {
-    my $s = undef;
-
-    # check if we want to use sockets instead of tcp
-    my ($sock) = ($host =~ /unix:\/\/(.+)*$/);
-
-    if ($sock) {
-       $s = IO::Socket::UNIX->new(
-            Peer     => $sock
-      );
-    } else {
-       $s = IO::Socket::INET->new(
-            Proto    => "tcp",
-            PeerAddr => $host,
-            PeerPort => $port,
-            Timeout  => 10,
-       );
-    }
-
-    return $s;
 }
 
 ##
@@ -347,7 +324,7 @@ sub get_conn {
 ##
 
 sub print_root_config {
-    my ($plugin) = (@_);
+    my ($prefix,$plugin) = (@_);
 
     die 'Unknown Plugin Specified: ' . ($plugin ? $plugin : '') unless $graphs{$plugin};
 
@@ -358,7 +335,15 @@ sub print_root_config {
     #print "graph memcached_$plugin\n";
 
     while ( my ($key, $value) = each(%graphconf)) {
-        print "graph_$key $value\n";
+        if ($key eq 'title') {
+            if ($prefix) {
+                print "graph_$key " . ucfirst($prefix) . " $value\n";
+            } else {
+                print "graph_$key $value\n";
+            }
+        } else {
+            print "graph_$key $value\n";
+        }
     }
 
     foreach my $dsrc (@{$graph->{datasrc}}) {
@@ -373,6 +358,34 @@ sub print_root_config {
 }
 
 ##
+#### This subroutine returns a socket connection ####
+##
+
+sub get_conn {
+    my $s = undef;
+
+    # check if we want to use sockets instead of tcp
+    my ($sock) = ($host =~ /unix:\/\/(.+)$/);
+
+    if ($sock) {
+        $connection = "unix:\/\/$sock";
+        $s = IO::Socket::UNIX->new(
+            Peer     => $sock
+        );
+    } else {
+        $connection = "$host:$port";
+        $s = IO::Socket::INET->new(
+            Proto    => "tcp",
+            PeerAddr => $host,
+            PeerPort => $port,
+            Timeout  => 10,
+        );
+    }
+
+    return $s;
+}
+
+##
 #### This subroutine actually performs the data fetch for us ####
 #### These commands do not lock up Memcache at all ####
 ##
@@ -380,7 +393,7 @@ sub print_root_config {
 sub fetch_stats {
     my $s = get_conn();
 
-    die "Error: Unable to Connect to $host\[:$port\]\n" unless $s;
+    die "Error: Unable to Connect to $connection\n" unless $s;
 
     print $s "stats\r\n";
 

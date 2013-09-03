@@ -99,8 +99,8 @@ use IO::Socket;
 use Munin::Plugin;
 use File::Basename;
 
-if (basename($0) !~ /^memcached_multi_/) {
-    print "This script needs to be named memcached_multi_ and have symlinks which start the same.\n";
+if (basename($0) !~ /(?:([^\/]+)_)?memcached_multi_/) {
+    print "This script needs to be named (prefix_)?memcached_multi_ to run properly.\n";
     exit 1;
 }
 
@@ -119,6 +119,7 @@ need_multigraph();
 # lets import environment variables for the plugin or use the default
 my $host = $ENV{host} || "127.0.0.1";
 my $port = $ENV{port} || 11211;
+my $connection;
 
 # This gives us the ability to control the timescale our graphs are displaying.
 # The default it set to divide by hours, if you want to get seconds set it to 1.
@@ -447,15 +448,16 @@ $graphs{slabunfetched} = {
 if (defined $ARGV[0] && $ARGV[0] eq 'config') {
     # Lets get our plugin from the symlink being called up, we'll also verify its a valid
     # plugin that we have graph information for
-    $0 =~ /memcached_multi_(.+)*/;
-    my $plugin = $1;
+    $0 =~ /(?:([^\/]+)_)?memcached_multi_(.+)$/;
+    my $prefix = $1 ? $1 : '';
+    my $plugin = $2;
     die 'Unknown Plugin Specified: ' . ($plugin ? $plugin : '') unless $graphs{$plugin};
     # We need to fetch the stats before we do any config, cause its needed for multigraph
     # subgraphs which use slab information for title / info per slab
     fetch_stats();
     $globalmap = buildglobalmap();
     # Now lets go ahead and print out our config.
-    do_config($plugin);
+    do_config($prefix, $plugin);
     exit 0;
 }
 
@@ -476,7 +478,7 @@ if (defined $ARGV[0] && $ARGV[0] eq 'autoconf') {
         print "yes\n";
         exit 0;
     } else {
-        print "no (unable to connect to $host\[:$port\])\n";
+        print "no (unable to connect to $connection)\n";
         exit 0;
     }
 }
@@ -507,7 +509,7 @@ if (defined $ARGV[0] && $ARGV[0] eq 'suggest') {
         }
         exit 0;
     } else {
-        print "no (unable to connect to $host\[:$port\])\n";
+        print "no (unable to connect to $connection)\n";
         exit 0;
     }
 }
@@ -525,53 +527,54 @@ if (defined $ARGV[0] && $ARGV[0] eq 'suggest') {
 =cut
 
 # Well, no arguments were supplied that we know about, so lets print some data
-$0 =~ /memcached_multi_(.+)*/;
-my $plugin = $1;
+$0 =~ /(?:([^\/]+)_)?memcached_multi_(.+)$/;
+my $prefix = $1 ? $1 : '';
+my $plugin = $2;
 die 'Unknown Plugin Specified: ' . ($plugin ? $plugin : '') unless $graphs{$plugin};
 fetch_stats();
 $globalmap = buildglobalmap();
-fetch_output($plugin);
+fetch_output($prefix,$plugin);
 
 sub fetch_output {
-    my ($plugin) = (@_);
+    my ($prefix,$plugin) = (@_);
     # Now lets go ahead and print out our output.
     my @subgraphs;
     if ($plugin eq 'memory') {
         @subgraphs = ('slabchnks');
         foreach my $slabid(sort{$a <=> $b} keys %chnks) {
-            print_submulti_output($slabid,$plugin,@subgraphs);
+            print_submulti_output($prefix,$slabid,$plugin,@subgraphs);
         }
-        print_subrootmulti_output($plugin);
-        print_rootmulti_output($plugin);
+        print_subrootmulti_output($prefix,$plugin);
+        print_rootmulti_output($prefix,$plugin);
     } elsif ($plugin eq 'commands') {
         @subgraphs = ('slabhits');
         foreach my $slabid(sort{$a <=> $b} keys %chnks) {
-            print_submulti_output($slabid,$plugin,@subgraphs);
+            print_submulti_output($prefix,$slabid,$plugin,@subgraphs);
         }
-        print_subrootmulti_output($plugin);
-        print_rootmulti_output($plugin);
+        print_subrootmulti_output($prefix,$plugin);
+        print_rootmulti_output($prefix,$plugin);
     } elsif ($plugin eq 'evictions') {
         @subgraphs = ('slabevics');
         if ($leitime == 1) { push(@subgraphs, 'slabevictime'); }
         foreach my $slabid (sort{$a <=> $b} keys %items) {
-            print_submulti_output($slabid,$plugin,@subgraphs);
+            print_submulti_output($prefix,$slabid,$plugin,@subgraphs);
         }
-        print_subrootmulti_output($plugin);
-        print_rootmulti_output($plugin);
+        print_subrootmulti_output($prefix,$plugin);
+        print_rootmulti_output($prefix,$plugin);
     } elsif ($plugin eq 'items') {
         @subgraphs = ('slabitems','slabitemtime');
         foreach my $slabid (sort{$a <=> $b} keys %items) {
-            print_submulti_output($slabid,$plugin,@subgraphs);
+            print_submulti_output($prefix,$slabid,$plugin,@subgraphs);
         }
-        print_subrootmulti_output($plugin);
-        print_rootmulti_output($plugin);
+        print_subrootmulti_output($prefix,$plugin);
+        print_rootmulti_output($prefix,$plugin);
     } elsif ($plugin eq 'unfetched') {
         @subgraphs = ('slabunfetched');
         foreach my $slabid (sort{$a <=> $b} keys %items) {
-            print_submulti_output($slabid,$plugin,@subgraphs);
+            print_submulti_output($prefix,$slabid,$plugin,@subgraphs);
         }
-        print_subrootmulti_output($plugin);
-        print_rootmulti_output($plugin);
+        print_subrootmulti_output($prefix,$plugin);
+        print_rootmulti_output($prefix,$plugin);
     } else {
         print_root_output($plugin);
     }
@@ -638,9 +641,13 @@ sub print_root_output {
 
 sub print_rootmulti_output {
     # Lets get our plugin, set our graph reference and print out info for Munin
-    my ($plugin) = (@_);
+    my ($prefix,$plugin) = (@_);
     my $graph = $graphs{$plugin};
-    print "multigraph memcached_multi_$plugin\n";
+    if ($prefix) {
+        print "multigraph $prefix\_memcached_multi_$plugin\n";
+    } else {
+        print "multigraph memcached_multi_$plugin\n";
+    }
     # Lets print our data values with their appropriate name
     foreach my $dsrc (@{$graph->{datasrc}}) {
         my $output = 0;
@@ -676,12 +683,20 @@ sub print_rootmulti_output {
 
 sub print_subrootmulti_output {
     # Lets get our plugin, set our graph reference and print out info for Munin
-    my ($plugin) = (@_);
+    my ($prefix,$plugin) = (@_);
     my $graph = $graphs{$plugin};
-    if ($plugin eq 'evictions') {
-        print "multigraph memcached_multi_$plugin.global$plugin\n";
+    if ($prefix) {
+        if ($plugin eq 'evictions') {
+            print "multigraph $prefix\_memcached_multi_$plugin.global$plugin\n";
+        } else {
+            print "multigraph $prefix\_memcached_multi_$plugin.$plugin\n";
+        }
     } else {
-        print "multigraph memcached_multi_$plugin.$plugin\n";
+        if ($plugin eq 'evictions') {
+            print "multigraph memcached_multi_$plugin.global$plugin\n";
+        } else {
+            print "multigraph memcached_multi_$plugin.$plugin\n";
+        }
     }
     # Lets print our data values with their appropriate name
     foreach my $dsrc (@{$graph->{datasrc}}) {
@@ -719,13 +734,17 @@ sub print_subrootmulti_output {
 
 sub print_submulti_output {
     # Lets get our slabid, plugin, and subgraphs
-    my ($slabid,$plugin,@subgraphs) = (@_);
+    my ($prefix,$slabid,$plugin,@subgraphs) = (@_);
     my $currslab = undef;
     # Time to loop over our subgraphs array
     foreach my $sgraph (@subgraphs) {
         # Lets set our graph reference for quick calling, and print some info for munin
         my $graph = $graphs{$sgraph};
-        print "multigraph memcached_multi_$plugin.$sgraph\_$slabid\n";
+        if ($prefix) {
+            print "multigraph $prefix\_memcached_multi_$plugin.$sgraph\_$slabid\n";
+        } else {
+            print "multigraph memcached_multi_$plugin.$sgraph\_$slabid\n";
+        }
         # Lets figure out what slab info we are trying to call up
         if (($plugin eq 'evictions') || ($plugin eq 'items') || ($plugin eq 'unfetched')) {
             $currslab = $items{$slabid};
@@ -763,51 +782,51 @@ sub print_submulti_output {
 
         $plugin; root graph being called
 
-    Example: do_config($plugin);
+    Example: do_config($prefix, $plugin);
 
 =cut
 
 sub do_config {
-    my ($plugin) = (@_);
+    my ($prefix,$plugin) = (@_);
     my @subgraphs;
     if ($plugin eq 'memory') {
         @subgraphs = ('slabchnks');
         foreach my $slabid (sort{$a <=> $b} keys %chnks) {
-            print_submulti_config($slabid,$plugin,@subgraphs);
+            print_submulti_config($prefix,$slabid,$plugin,@subgraphs);
         }
-        print_subrootmulti_config($plugin);
-        print_rootmulti_config($plugin);
+        print_subrootmulti_config($prefix,$plugin);
+        print_rootmulti_config($prefix,$plugin);
     } elsif ($plugin eq 'commands') {
         @subgraphs = ('slabhits');
         foreach my $slabid (sort{$a <=> $b} keys %chnks) {
-            print_submulti_config($slabid,$plugin,@subgraphs);
+            print_submulti_config($prefix,$slabid,$plugin,@subgraphs);
         }
-        print_subrootmulti_config($plugin);
-        print_rootmulti_config($plugin);
+        print_subrootmulti_config($prefix,$plugin);
+        print_rootmulti_config($prefix,$plugin);
     } elsif ($plugin eq 'evictions') {
         @subgraphs = ('slabevics');
         if ($leitime == 1) { push(@subgraphs, 'slabevictime'); }
         foreach my $slabid (sort{$a <=> $b}  keys %items) {
-            print_submulti_config($slabid,$plugin,@subgraphs);
+            print_submulti_config($prefix,$slabid,$plugin,@subgraphs);
         }
-        print_subrootmulti_config($plugin);
-        print_rootmulti_config($plugin);
+        print_subrootmulti_config($prefix,$plugin);
+        print_rootmulti_config($prefix,$plugin);
     } elsif ($plugin eq 'items') {
         @subgraphs = ('slabitems','slabitemtime');
         foreach my $slabid (sort{$a <=> $b} keys %items) {
-            print_submulti_config($slabid,$plugin,@subgraphs);
+            print_submulti_config($prefix,$slabid,$plugin,@subgraphs);
         }
-        print_subrootmulti_config($plugin);
-        print_rootmulti_config($plugin);
+        print_subrootmulti_config($prefix,$plugin);
+        print_rootmulti_config($prefix,$plugin);
     } elsif ($plugin eq 'unfetched') {
         @subgraphs = ('slabunfetched');
         foreach my $slabid (sort{$a <=> $b}  keys %items) {
-            print_submulti_config($slabid,$plugin,@subgraphs);
+            print_submulti_config($prefix,$slabid,$plugin,@subgraphs);
         }
-        print_subrootmulti_config($plugin);
-        print_rootmulti_config($plugin);
+        print_subrootmulti_config($prefix,$plugin);
+        print_rootmulti_config($prefix,$plugin);
     } else {
-        print_root_config($plugin);
+        print_root_config($prefix,$plugin);
     }
 
     return;
@@ -818,20 +837,29 @@ sub do_config {
     This subroutine prints out the config information for all of the non-multigraph root graphs.
     It takes one parameter, $plugin, returns when completed.
 
+        $prefix;    possible prefix used to allow multiple plugins per machine
         $plugin;    root graph used for multigraph call
 
-    Example:  print_root_config($plugin);
+    Example:  print_root_config($prefix,$plugin);
 
 =cut
 
 sub print_root_config {
     # Lets get our plugin, set our graph reference and our graph config info
-    my ($plugin) = (@_);
+    my ($prefix,$plugin) = (@_);
     my $graph = $graphs{$plugin};
     my %graphconf = %{$graph->{config}};
     # Lets tell munin about the graph we are referencing and print the main config
     while ( my ($key, $value) = each(%graphconf)) {
-        print "graph_$key $value\n";
+        if ($key eq 'title') {
+            if ($prefix) {
+                print "graph_$key " . ucfirst($prefix) . " $value\n";
+            } else {
+                print "graph_$key $value\n";
+            }
+        } else {
+            print "graph_$key $value\n";
+        }
     }
     # Lets tell munin about our data values and how to treat them
     foreach my $dsrc (@{$graph->{datasrc}}) {
@@ -849,22 +877,36 @@ sub print_root_config {
     This subroutine prints out the config information for all of the multigraph root graphs.
     It takes one parameter, $plugin, returns when completed.
 
+        $prefix;    possible prefix used to allow multiple plugins per machine
         $plugin;    root graph used for multigraph call
 
-    Example:  print_rootmulti_config($plugin);
+    Example:  print_rootmulti_config($prefix,$plugin);
 
 =cut
 
 sub print_rootmulti_config {
     # Lets get out plugin, set our graph reference and our graph config info
-    my ($plugin) = (@_);
+    my ($prefix,$plugin) = (@_);
     my $graph = $graphs{$plugin};
     my %graphconf = %{$graph->{config}};
     # Lets tell munin about the graph we are referencing and print the main config
-    print "multigraph memcached_multi_$plugin\n";
+    if ($prefix) {
+        print "multigraph $prefix\_memcached_multi_$plugin\n";
+    } else {
+        print "multigraph memcached_multi_$plugin\n";
+    }
     while ( my ($key, $value) = each(%graphconf)) {
-        if ($key eq 'category') { $value = 'memcached' };
-        print "graph_$key $value\n";
+        if ($key eq 'category') { 
+            print "graph_$key memcached\n";
+        } elsif ($key eq 'title') {
+            if ($prefix) {
+                print "graph_$key " . ucfirst($prefix) . " $value\n";
+            } else {
+                print "graph_$key $value\n";
+            }
+        } else {
+            print "graph_$key $value\n";
+        }
     }
     # Lets tell munin about our data values and how to treat them
     foreach my $dsrc (@{$graph->{datasrc}}) {
@@ -885,24 +927,42 @@ sub print_rootmulti_config {
     graph of the data will display on the subpage made by the multigraph capabilities of munin and
     the plugin. It takes one parameter, $plugin, returns when completed.
 
+        $prefix;    possible prefix used to allow multiple plugins per machine
         $plugin;    root graph used for multigraph call
 
-    Example:  print_rootmulti_config($plugin);
+    Example:  print_rootmulti_config($prefix,$plugin);
 
 =cut
 
 sub print_subrootmulti_config {
     # Lets get out plugin, set our graph reference and our graph config info
-    my ($plugin) = (@_);
+    my ($prefix,$plugin) = (@_);
     my $graph = $graphs{$plugin};
     my %graphconf = %{$graph->{config}};
-    if ($plugin eq 'evictions') {
-        print "multigraph memcached_multi_$plugin.global$plugin\n";
+    if ($prefix) {
+        if ($plugin eq 'evictions') {
+            print "multigraph $prefix\_memcached_multi_$plugin.global$plugin\n";
+        } else {
+            print "multigraph $prefix\_memcached_multi_$plugin.$plugin\n";
+        }
     } else {
-        print "multigraph memcached_multi_$plugin.$plugin\n";
+        if ($plugin eq 'evictions') {
+            print "multigraph memcached_multi_$plugin.global$plugin\n";
+        } else {
+            print "multigraph memcached_multi_$plugin.$plugin\n";
+        }
     }
+
     while ( my ($key, $value) = each(%graphconf)) {
-        print "graph_$key $value\n";
+        if ($key eq 'title') {
+            if ($prefix) {
+                print "graph_$key " . ucfirst($prefix) . " $value\n";
+            } else {
+                print "graph_$key $value\n";
+            }
+        } else {
+            print "graph_$key $value\n";
+        }
     }
     # Lets tell munin about our data values and how to treat them
     foreach my $dsrc (@{$graph->{datasrc}}) {
@@ -922,17 +982,18 @@ sub print_subrootmulti_config {
     This subroutine prints out the config information for all of the multigraph subgraphs.
     It takes three parameters, $slabid, $plugin and @subgraphs, returns when completed.
 
+        $prefix;    possible prefix used to allow multiple plugins per machine
         $slabid;    slab id that we will use to grab info from and print out
         $plugin;    root graph being called, used for multigraph output and slab id
         @subgraphs; graphs we are actually trying to print data values for
 
-    Example:  print_submulti_config($slabid,$plugin,@subgraphs);
+    Example:  print_submulti_config($prefix,$slabid,$plugin,@subgraphs);
 
 =cut
 
 sub print_submulti_config {
     # Lets get our slabid, plugin, and subgraphs
-    my ($slabid,$plugin,@subgraphs) = (@_);
+    my ($prefix,$slabid,$plugin,@subgraphs) = (@_);
     my ($slabitems,$slabchnks) = undef;
     # Time to loop over our subgraphs array
     foreach my $sgraph (@subgraphs) {
@@ -940,10 +1001,18 @@ sub print_submulti_config {
         my $graph = $graphs{$sgraph};
         my %graphconf = %{$graph->{config}};
         # Lets tell munin which graph we are graphing, and what our main graph config info is 
-        print "multigraph memcached_multi_$plugin.$sgraph\_$slabid\n";
+        if ($prefix) {
+            print "multigraph $prefix\_memcached_multi_$plugin.$sgraph\_$slabid\n";
+        } else {
+            print "multigraph memcached_multi_$plugin.$sgraph\_$slabid\n";
+        }
         while ( my ($key, $value) = each(%graphconf)) {
             if ($key eq 'title') {
-                print "graph_$key $value" . "$slabid" . " ($chnks{$slabid}->{chunk_size} Bytes)\n";
+                if ($prefix) {
+                    print "graph_$key " . ucfirst($prefix) . " $value" . "$slabid" . " ($chnks{$slabid}->{chunk_size} Bytes)\n";
+                } else {
+                    print "graph_$key $value" . "$slabid" . " ($chnks{$slabid}->{chunk_size} Bytes)\n";
+                }
             } elsif (($key eq 'vlabel') && (($sgraph eq 'slabevictime') || ($sgraph eq 'slabitemtime'))) {
                 $value = time_scale('config',$value);
                 print "graph_$key $value\n";
@@ -983,16 +1052,18 @@ sub get_conn {
     my ($sock) = ($host =~ /unix:\/\/(.+)*$/);
 
     if ($sock) {
-       $s = IO::Socket::UNIX->new(
+        $connection = "unix:\/\/$sock";
+        $s = IO::Socket::UNIX->new(
             Peer     => $sock
-      );
+        );
     } else {
-       $s = IO::Socket::INET->new(
+        $connection = "$host:$port";
+        $s = IO::Socket::INET->new(
             Proto    => "tcp",
             PeerAddr => $host,
             PeerPort => $port,
             Timeout  => 10,
-       );
+        );
     }
     return $s;
 }
@@ -1008,7 +1079,7 @@ sub fetch_stats {
     # Lets try and connect to memcached
     my $s = get_conn();
     # Die if we can't establish a connection to memcached
-    die "Error: Unable to Connect to $host\[:$port\]\n" unless $s;
+    die "Error: Unable to Connect to $connection\n" unless $s;
     # Lets print the stats command and store the info from the output
     print $s "stats\r\n";
     while (my $line = <$s>) {
