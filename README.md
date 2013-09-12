@@ -14,7 +14,7 @@ Munin: http://munin-monitoring.org
   * Both of the plugins expose the global memcached statistical information.  
     
     * [memcached_](README.md#memcached_) ( No real extra features, may not always receive constant updating )  
-    * [memcached_multi_](README.#memcached_multi_) ( Provides hit rates / evictions / other memory information on a per slab basis )  
+    * [memcached_multi_](README.md#memcached_multi_) ( Provides hit rates / evictions / other memory information on a per slab basis )  
 
   * Ultimately the difference between them is like comparing only having a bird's eye view of a node's performance
     or the bird's eye view, as well as the worm's view.
