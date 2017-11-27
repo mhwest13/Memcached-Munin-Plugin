@@ -315,7 +315,7 @@ $graphs{bytes} = {
         {
             name     => 'bytes_written',
             type     => 'DERIVE',
-            label    => 'Traffic in / out',
+            label    => 'Traffic',
             negative => 'bytes_read',
             cdef     => 'bytes_written,8,*',
             min      => '0'
@@ -337,14 +337,14 @@ $graphs{conns} = {
     },
     datasrc => [
 	{ name => 'uptime',     label => 'Days uptime', min => '0',
-	  cdef => '86400,/' },
+	  cdef => 'uptime,86400,/' },
         { name => 'curr_conns', label => 'Current Connections', min => '0' },
         { name => 'max_conns',  label => 'Max Connections',     min => '0' },
         { name => 'avg_conns',  label => 'Avg Connections',     min => '0' },
 	{ name => 'listen_disabled_num', label => 'Unavailable', min => '0',
-	  extinfo => 'Number of times new connections has had to wait' },
+	  info => 'Number of times new connections has had to wait' },
 	{ name => 'conn_yields', label => 'Throttled',          min => '0',
-	  extinfo => 'Number of times a client has been throttled' },
+	  info => 'Number of times a client has been throttled' },
 	
     ],
 };
