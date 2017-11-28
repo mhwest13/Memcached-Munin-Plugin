@@ -292,7 +292,7 @@ $graphs{memory} = {
         args     => '--base 1024 --lower-limit 0',
         vlabel   => 'Bytes',
         category => 'memcached',
-        title    => 'Memory Usage',
+        title    => 'Memcached Memory Usage',
         info     => 'Memory consumption of memcached',
     },
     datasrc => [
@@ -315,10 +315,10 @@ $graphs{memory} = {
 $graphs{bytes} = {
     config => {
         args     => '--base 1000',
-        vlabel   => 'bits in (-) / out (+)',
-        title    => 'Network Traffic',
+        vlabel   => 'bits in (-) / out (+) per ${graph_period}',
+        title    => 'Memcached Network Traffic',
         category => 'memcached',
-        info     => 'Network traffic in (-) / out (+) of the machine',
+        info     => 'Network traffic in / out of memcached',
         order    => 'bytes_read bytes_written',
     },
     datasrc => [
@@ -346,7 +346,7 @@ $graphs{uptime} = {
     config => {
 	vlabel   => 'Uptime (days)',
 	category => 'memcached',
-	title    => 'Uptime',
+	title    => 'Memcached Uptime',
     },
     datasrc => [
 	{ name  => 'uptime',
@@ -359,7 +359,7 @@ $graphs{uptime} = {
 $graphs{errors} = {
     config => {
 	vlabel    => 'Times',
-	title     => 'Errors',
+	title     => 'Memcached Errors',
 	category  => 'memcached',
     },
     datasrc => [
@@ -379,14 +379,16 @@ $graphs{conns} = {
     config => {
         vlabel   => 'Number',
         category => 'memcached',
-        title    => 'Current connections',
+        title    => 'Memcached connections',
         info     => 'Connection stats',
         order    => 'curr_conns avg_conns max_conns',
     },
     datasrc => [
-        { name => 'curr_conns', label => 'Current Connections', min => '0' },
-        { name => 'max_conns',  label => 'Max Connections',     min => '0' },
-        { name => 'avg_conns',  label => 'Avg Connections',     min => '0' },
+        { name => 'curr_conns', label => 'Current', min => '0' },
+        { name => 'max_conns',  label => 'Maximum', min => '0',
+	  info => 'Configured maximum connections' },
+        { name => 'avg_conns',  label => 'Average', min => '0',
+	  info => 'Average connections computed by memcached' },
     ],
 };
 
