@@ -9,12 +9,27 @@ Memcached Multi - A Plugin to monitor Memcached Servers.  This is the
 collect all the things all the time version using multigraphing.  See
 also memcached_multi_ and memcached_.
 
-The common difference between this memcached Munin plugin and others
-that exists, is that others don't expose slab information from
-memcached, so you can better tune your memcached interaction /
-stability / etc. With this plugin we leverage multigraph capabilities
-in Munin to "hide" the slab information underneath of their parent
-graphs.
+The difference between this memcached Munin plugin and others that
+exists, is that others don't expose slab information from memcached,
+so you can better tune your memcached interaction / stability / etc.
+With this plugin we leverage multigraph capabilities in Munin to
+"hide" the slab information underneath of their parent graphs.
+
+=head2 Compatability
+
+This plugin provide the same kinds of stats as other older memcached
+plugins, but it does not provide compatability with the memcached_
+plugin provided in earlier versions of munin because the differences
+are too great.  This plugin is compatible with I<some> but not all
+versions of the memcache_multi_ plugin. This is because the different
+versions have been using incompatbile graph names.
+
+This plugin is compatible with the latest version provided in Matt
+West's github repository.
+
+So if you use most other versions of old memcached* plugins you'll
+loose your history unless you retain the old plugin as well.  They
+will co-exist peacefuly.
 
 =head1 MUNIN NODE CONFIGURATION
 
@@ -144,6 +159,9 @@ Thanks to dormando for putting up with me ;)
 =head1 AUTHOR
 
 Matt West < https://github.com/mhwest13/Memcached-Munin-Plugin >
+
+Nicolai Langfeldt < https://github.com/niclang/ > perturbed and added
+to Matts work.
 
 =head1 LICENSE
 
@@ -324,28 +342,51 @@ $graphs{bytes} = {
 };
 
 
+$graphs{uptime} = {
+    config => {
+	vlabel   => 'Uptime (days)',
+	category => 'memcached',
+	title    => 'Uptime',
+    },
+    datasrc => [
+	{ name  => 'uptime',
+	  label => 'Uptime',
+	  cdef  => 'uptime,86400,/' }
+    ]
+};
+
+
+$graphs{errors} = {
+    config => {
+	vlabel    => 'Times',
+	title     => 'Errors',
+	category  => 'memcached',
+    },
+    datasrc => [
+	{ name  => 'listen_disabled_num', 
+	  label => 'Times unavailable',
+	  min   => '0',
+	  info  => 'Number of times new connections has had to wait' },
+	{ name  => 'conn_yields',
+	  label => 'Times throttled',
+	  min   => '0',
+	  info  => 'Number of times a client has been throttled' }
+	]
+};
 
 # graph for memcached connections
 $graphs{conns} = {
     config => {
-        args     => '--base 1000 --lower-limit 0',
-        vlabel   => 'Stats and Connections per ${graph_period}',
+        vlabel   => 'Number',
         category => 'memcached',
-        title    => 'Stats',
-        info     => 'Stats and connections being handled by memcached',
-        order    => 'max_conns curr_conns avg_conns listen_disabled_num conn_yields uptime',
+        title    => 'Current connections',
+        info     => 'Connection stats',
+        order    => 'curr_conns avg_conns max_conns',
     },
     datasrc => [
-	{ name => 'uptime',     label => 'Days uptime', min => '0',
-	  cdef => 'uptime,86400,/' },
         { name => 'curr_conns', label => 'Current Connections', min => '0' },
         { name => 'max_conns',  label => 'Max Connections',     min => '0' },
         { name => 'avg_conns',  label => 'Avg Connections',     min => '0' },
-	{ name => 'listen_disabled_num', label => 'Unavailable', min => '0',
-	  info => 'Number of times new connections has had to wait' },
-	{ name => 'conn_yields', label => 'Throttled',          min => '0',
-	  info => 'Number of times a client has been throttled' },
-	
     ],
 };
 
@@ -767,7 +808,7 @@ plugin.
 =cut
 
 my @rootplugins = ( 'bytes', 'conns', 'commands', 'evictions',
-		    'items', 'memory', 'unfetched' );
+		    'items', 'memory', 'unfetched', 'uptime', 'errors' );
 
 
 if ( defined $ARGV[0] && $ARGV[0] eq 'config' ) {
